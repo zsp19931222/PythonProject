@@ -68,6 +68,33 @@ def has_data(table, select_sql):
     return b
 
 
+def select_data(table, select_sql):
+    # 打开数据库连接
+    db = pymysql.connect(
+        host='localhost',
+        port=3306,
+        user='root',
+        password='022875',
+        db=table,
+        charset='utf8'
+    )
+    cursor = db.cursor()
+    try:
+        # 执行SQL语句
+        cursor.execute(select_sql)
+        # 获取所有记录列表
+        results = cursor.fetchall()
+    except Exception as ex:
+        print (ex)
+        # 如果发生错误则回滚
+        db.rollback()
+        results = ''
+    # 关闭数据库连接
+    db.close()
+    print
+    return results
+
+
 # 连接页面
 def connection(url):
     res = requests.get(url, headers=headers)

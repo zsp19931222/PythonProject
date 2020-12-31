@@ -4,6 +4,8 @@
 import connect as con
 import time
 import schedule
+import push
+import random
 
 base_url = 'https://news.baidu.com/sports'
 other_id = ['WorldSoccerNews', 'ChinaSoccerNews', 'OtherNews', 'CbaNews', 'LatestNews']
@@ -40,6 +42,41 @@ def save_data(table, a_list):
         con.insert_data(delete_sql, 'sport_news')
 
 
+def push_message():
+    table = ''
+    title = ''
+    i = random.randint(0, 5)
+    if i == 0:
+        table = 'world_soccer'
+        title = '国际足球'
+
+    elif i == 1:
+        table = 'china_soccer'
+        title = '国内足球'
+
+    elif i == 2:
+        table = 'cba'
+        title = 'CBA'
+
+    elif i == 3:
+        table = 'nba'
+        title = 'NBA'
+
+    elif i == 4:
+        table = 'latest'
+        title = '最新新闻'
+
+    elif i == 5:
+        table = 'other'
+        title = '综合新闻'
+    print table
+
+    result = con.select_data('sport_news', "select * from %s  order by id DESC limit 1" % table)
+    if result != '':
+        for data in result:
+            push.all(data[2], title)
+
+
 def news_world_soccer():
     for other in other_id:
         other_url = 'https://news.baidu.com/widget?id=%s&channel=sports&t=%s' % (other, str(
@@ -58,6 +95,7 @@ def news_world_soccer():
         soup = con.connection(other_url)
         a_list = soup.findAll('a')
         save_data(table, a_list)
+        nba()
 
 
 def nba():
@@ -70,10 +108,10 @@ def nba():
     a_list = col_focus.findAll('a')
     save_data('other', a_list)
 
+    push_message()
+
 
 schedule.every(30).minutes.do(news_world_soccer)
-schedule.every(30).minutes.do(nba)
-
 
 while True:
     schedule.run_pending()  # 运行所有可以运行的任务
