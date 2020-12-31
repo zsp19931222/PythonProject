@@ -33,13 +33,13 @@ def save_data(table, a_list):
         if title == '':
             break
         select_sql = "select href from %s where href='%s'" % (table, href)
-        if not con.has_data('sport_news', select_sql):
+        if not con.has_data(select_sql):
             sql = "REPLACE INTO %s(href,title,img) VALUES ('%s','%s','%s')" % (
                 table, href, title, img)
-            con.insert_data(sql, 'sport_news')
+            con.insert_data(sql)
         delete_sql = "DELETE FROM %s where title='%s' or title= '%s' or title = '%s'" % (
             table, '更多'.decode('utf8'), '推荐阅读'.decode('utf8'), '精品推荐'.decode('utf8'))
-        con.insert_data(delete_sql, 'sport_news')
+        con.insert_data(delete_sql)
 
 
 def push_message():
@@ -71,10 +71,11 @@ def push_message():
         title = '综合新闻'
     print table
 
-    result = con.select_data('sport_news', "select * from %s  order by id DESC limit 1" % table)
+    result = con.select_data("select * from %s  order by id DESC limit 1" % table)
     if result != '':
         for data in result:
             push.all(data[2], title)
+    con.db.close()
 
 
 def news_world_soccer():
@@ -95,7 +96,6 @@ def news_world_soccer():
         soup = con.connection(other_url)
         a_list = soup.findAll('a')
         save_data(table, a_list)
-        nba()
 
 
 def nba():
@@ -108,11 +108,14 @@ def nba():
     a_list = col_focus.findAll('a')
     save_data('other', a_list)
 
-    push_message()
-
 
 schedule.every(30).minutes.do(news_world_soccer)
+schedule.every(30).minutes.do(nba)
+schedule.every(30).minutes.do(push_message)
 
 while True:
     schedule.run_pending()  # 运行所有可以运行的任务
     time.sleep(1)
+
+
+

@@ -20,7 +20,7 @@ def all(alertMessage, titleMessage):
     push.platform = jpush.all_
     try:
         response = push.send()
-        print '推送消息发送成功'
+        print 'push success'
     except common.Unauthorized:
         raise common.Unauthorized("Unauthorized")
     except common.APIConnectionException:

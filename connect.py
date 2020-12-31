@@ -10,18 +10,18 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/79.0.3945.88 Safari/537.36'}
 
+db = pymysql.connect(
+    host='141.164.49.212',
+    port=3306,
+    user='root',
+    password='123456',
+    db='sport_news',
+    charset='utf8'
+)
+
 
 # 保存数据
-def insert_data(sql, table):
-    # 打开数据库连接
-    db = pymysql.connect(
-        host='localhost',
-        port=3306,
-        user='root',
-        password='022875',
-        db=table,
-        charset='utf8'
-    )
+def insert_data(sql):
     # 使用 cursor() 方法创建一个游标对象 cursor
     cursor = db.cursor()
     try:
@@ -33,21 +33,10 @@ def insert_data(sql, table):
         print (ex)
         # 如果发生错误则回滚
         db.rollback()
-    # 关闭数据库连接
-    db.close()
 
 
 # 是否存在该数据
-def has_data(table, select_sql):
-    # 打开数据库连接
-    db = pymysql.connect(
-        host='localhost',
-        port=3306,
-        user='root',
-        password='022875',
-        db=table,
-        charset='utf8'
-    )
+def has_data(select_sql):
     cursor = db.cursor()
     try:
         # 执行SQL语句
@@ -63,21 +52,11 @@ def has_data(table, select_sql):
         # 如果发生错误则回滚
         db.rollback()
         b = bool(0)
-    # 关闭数据库连接
-    db.close()
+
     return b
 
 
-def select_data(table, select_sql):
-    # 打开数据库连接
-    db = pymysql.connect(
-        host='localhost',
-        port=3306,
-        user='root',
-        password='022875',
-        db=table,
-        charset='utf8'
-    )
+def select_data(select_sql):
     cursor = db.cursor()
     try:
         # 执行SQL语句
@@ -89,8 +68,6 @@ def select_data(table, select_sql):
         # 如果发生错误则回滚
         db.rollback()
         results = ''
-    # 关闭数据库连接
-    db.close()
     print
     return results
 
