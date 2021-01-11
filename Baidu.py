@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
 
-import connect as con
+import random
 import time
 import schedule
+import connect as con
+import hupu
 import push
-import random
+from DBManager import DBManager
 
 base_url = 'https://news.baidu.com/sports'
 other_id = ['WorldSoccerNews', 'ChinaSoccerNews', 'OtherNews', 'CbaNews', 'LatestNews']
+# other_id = ['CbaNews']
+
+dbManager = DBManager()
 
 
 # other_id = ['OtherNews']
@@ -17,7 +22,7 @@ def save_data(table, a_list):
         try:
             href = a['href']
         except Exception as e:
-            print e
+            print(e)
         try:
             if href.startswith('http://baijiahao.baidu.com/'):
                 second_soup = con.connection(a['href'])
@@ -32,20 +37,19 @@ def save_data(table, a_list):
             img = ''
         if title == '':
             break
-        select_sql = "select href from %s where href='%s'" % (table, href)
-        if not con.has_data(select_sql):
-            sql = "REPLACE INTO %s(href,title,img) VALUES ('%s','%s','%s')" % (
-                table, href, title, img)
-            con.insert_data(sql)
+
+        sql = "REPLACE INTO %s(href,title,img) VALUES ('%s','%s','%s')" % (
+            table, href, title, img)
+        dbManager.insert(sql)
         delete_sql = "DELETE FROM %s where title='%s' or title= '%s' or title = '%s'" % (
-            table, '更多'.decode('utf8'), '推荐阅读'.decode('utf8'), '精品推荐'.decode('utf8'))
-        con.insert_data(delete_sql)
+            table, '更多', '推荐阅读', '精品推荐')
+        dbManager.insert(delete_sql)
 
 
 def push_message():
     table = ''
     title = ''
-    i = random.randint(0, 5)
+    i = random.randint(0, 6)
     if i == 0:
         table = 'world_soccer'
         title = '国际足球'
@@ -69,27 +73,29 @@ def push_message():
     elif i == 5:
         table = 'other'
         title = '综合新闻'
-    print table
+    elif i == 6:
+        table = 'hupu_soccer'
+        title = '虎扑足球'
+    print(table)
 
-    result = con.select_data("select * from %s  order by id DESC limit 1" % table)
+    result = dbManager.select("select * from %s  order by id DESC limit 1" % table)
     if result != '':
         for data in result:
-            push.all(data[2], title)
-    con.db.close()
+            push.all(data['title'], title, data['img'])
 
 
 def news_world_soccer():
     for other in other_id:
         other_url = 'https://news.baidu.com/widget?id=%s&channel=sports&t=%s' % (other, str(
             int(round(time.time() * 1000))))
-        print other_url
-        if other is 'WorldSoccerNews':
+        print(other_url)
+        if other == 'WorldSoccerNews':
             table = 'world_soccer'
-        elif other is 'ChinaSoccerNews':
+        elif other == 'ChinaSoccerNews':
             table = 'china_soccer'
-        elif other is 'CbaNews':
+        elif other == 'CbaNews':
             table = 'cba'
-        elif other is 'OtherNews':
+        elif other == 'OtherNews':
             table = 'other'
         else:
             table = 'latest'
@@ -109,13 +115,16 @@ def nba():
     save_data('other', a_list)
 
 
-schedule.every(30).minutes.do(news_world_soccer)
-schedule.every(30).minutes.do(nba)
+schedule.every(5).minutes.do(news_world_soccer)
+schedule.every(5).minutes.do(nba)
+schedule.every(5).minutes.do(hupu.api)
 schedule.every(30).minutes.do(push_message)
-
+#
 while True:
     schedule.run_pending()  # 运行所有可以运行的任务
     time.sleep(1)
 
-
+# news_world_soccer()
+# nba()
+# push_message()
 
